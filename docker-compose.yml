@@ -1,0 +1,19 @@
+services:
+  damage_estimation_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mldnet.azurecr.io/damage_control_api:1.0.2
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - GEMINI_API_KEY=AIzaSyClArbf77SHWFgtDdE7f9pbcZLyb2EugdQ
+      - MODEL_NAME=gemini-2.0-flash-exp
+    logging:
+      driver: 'json-file'
+#
+##
+#
+# docker push mldnet.azurecr.io/damage_control_api:1.0.0
+# docker login mldnet.azurecr.io
