@@ -1,0 +1,6 @@
+uvicorn~=0.34.3
+fastapi~=0.115.13
+faster-whisper~=1.1.1
+openai~=1.78.1
+azure-core~=1.34.0
+pillow~=11.1.0
