@@ -6,7 +6,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY fastapi_app.py geminitest.py ./
+COPY fastapi_app.py ./
 
 EXPOSE 80
 
