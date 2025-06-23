@@ -1,0 +1,102 @@
+from PIL import Image
+from io import BytesIO
+from konfiguracija import get_document_intel_object, get_openai_credentials
+import json
+
+with open('format_izlaza.json', 'rb') as f:
+    format_izlaza = json.load(f)
+
+def extract_info_from_image(file_input,
+                            max_size=1000):
+    """
+    Extract information from an image using Azure Document Intelligence
+    Resize image if needed.
+    """
+    client = get_document_intel_object()
+    img = Image.open(file_input)
+
+    # Resize image if needed
+    w, h = img.size
+    if max(w, h) > max_size:
+        factor = max_size / max(w, h)
+        img = img.resize((int(w * factor), int(h * factor)), Image.LANCZOS)
+    stream = BytesIO()
+    img.save(stream, format="PNG")
+    stream.seek(0)
+    poller = client.begin_analyze_document(
+        model_id="prebuilt-layout",
+        body=stream,
+        content_type="image/png"
+    )
+    return poller.result()
+
+def extract_info_from_pdf(file_input):
+    """
+    Extracts information from a PDF file using Azure Document Intelligence
+    """
+    client = get_document_intel_object()
+    poller = client.begin_analyze_document(
+        model_id="prebuilt-layout",
+        body=file_input,
+        content_type="application/pdf"
+    )
+    return poller.result()
+
+
+def process_ocr_output(ocr_json: str) -> str:
+    """
+    Feeds the raw OCR JSON (ocr_json) into the model with a strict system prompt,
+    and returns the assistant’s raw text response (your flat JSON).
+    """
+
+    model, client = get_openai_credentials()
+
+    system_prompt = (
+        "You are a highly accurate data-extraction tool. "
+        "Given the full OCR output from a document (as JSON), "
+        "return ONLY a single, valid JSON object by filling in the values"
+        "You will likely be given a text in English or Serbian"
+        "Correct some obvious mistakes if esitmate that they are made"
+        "but do not write anything else"
+        f"here is the format of the output: {format_izlaza}"
+    )
+
+    user_prompt = f"**INPUT**\n{ocr_json}"
+
+    messages = [
+        {"role": "system",  "content": system_prompt},
+        {"role": "user",    "content": user_prompt}
+    ]
+
+    reponse = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=0.0,
+    )
+
+    clean_response = reponse.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+    dict_response = json.loads(clean_response)
+
+    return dict_response
+
+def analyse_document(input,
+                     input_type='image'):
+    """
+    Performs document analysis and returns the output
+    """
+    if input_type == 'image':
+        document_intelligence_output = extract_info_from_image(input)
+    elif input_type == 'pdf':
+        document_intelligence_output = extract_info_from_pdf(input)
+    else:
+        raise ValueError("Invalid input type. Please choose 'image' or 'pdf'.")
+
+    processed_output = process_ocr_output(document_intelligence_output.content)
+
+    return processed_output
+
+
+if __name__ == "__main__":
+    pass
+
+

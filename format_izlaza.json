@@ -1,0 +1,117 @@
+{
+  "basicInfo": {
+    "date": "",
+    "time": "",
+    "locality": {
+      "place": "",
+      "country": ""
+    },
+    "injuries": {
+      "evenIfSlight": null,
+      "details": ""
+    },
+    "materialDamage": {
+      "otherThanVehicles": null,
+      "details": ""
+    }
+  },
+  "witnesses": [
+    {
+      "name": "",
+      "address": "",
+      "telephone": ""
+    }
+  ],
+  "vehicles": {
+    "vehicleA": {
+      "makeAndType": "",
+      "registrationNumber": "",
+      "countryOfRegistration": ""
+    },
+    "vehicleB": {
+      "makeAndType": "",
+      "registrationNumber": "",
+      "countryOfRegistration": ""
+    }
+  },
+  "insurance": {
+    "insuranceA": {
+      "companyName": "",
+      "policyNumber": "",
+      "greenCardNumber": "",
+      "validFrom": "",
+      "validTo": "",
+      "agencyName": "",
+      "agencyAddress": "",
+      "agencyCountry": "",
+      "agencyTelOrEmail": "",
+      "coversMaterialDamage": null
+    },
+    "insuranceB": {
+      "companyName": "",
+      "policyNumber": "",
+      "greenCardNumber": "",
+      "validFrom": "",
+      "validTo": "",
+      "agencyName": "",
+      "agencyAddress": "",
+      "agencyCountry": "",
+      "agencyTelOrEmail": "",
+      "coversMaterialDamage": null
+    }
+  },
+  "drivers": {
+    "driverA": {
+      "name": "",
+      "firstName": "",
+      "dateOfBirth": "",
+      "address": "",
+      "country": "",
+      "telOrEmail": "",
+      "drivingLicenceNumber": "",
+      "category": "",
+      "validUntil": ""
+    },
+    "driverB": {
+      "name": "",
+      "firstName": "",
+      "dateOfBirth": "",
+      "address": "",
+      "country": "",
+      "telOrEmail": "",
+      "drivingLicenceNumber": "",
+      "category": "",
+      "validUntil": ""
+    }
+  },
+  "impact": {
+    "vehicleA": {
+      "pointOfInitialImpact": "",
+      "visibleDamage": [ "" ]
+    },
+    "vehicleB": {
+      "pointOfInitialImpact": "",
+      "visibleDamage": [ "" ]
+    }
+  },
+  "circumstances": [],
+  "sketch": {
+    "description": ""
+  },
+  "remarks": {
+    "vehicleA": "",
+    "vehicleB": ""
+  },
+  "signatures": {
+    "driverA": {
+      "name": "",
+      "dateSigned": "",
+      "place": ""
+    },
+    "driverB": {
+      "name": "",
+      "dateSigned": "",
+      "place": ""
+    }
+  }
+}
