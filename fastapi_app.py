@@ -355,7 +355,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
-model = WhisperModel("base.en")
+model = WhisperModel("base")
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
     if not file.content_type.startswith("audio/"):
