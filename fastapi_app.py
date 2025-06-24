@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Path, Body, File, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import os
 import requests
@@ -309,24 +309,41 @@ def batch_inspect(
     return parse_gemini_output(resp.text)
 
 
-app = FastAPI(title="Vehicle Damage Analyzer")
 
-
-class AnalyzeCaseRequest(BaseModel):
-    auth_token: str
+app = FastAPI(
+    title="Vehicle Damage Analyzer",
+    description="Analyze vehicle damage images via Google Gemini AI and transcribe audio files using Whisper.",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 
 class AnalyzeBatchRequest(BaseModel):
-    case_id: Optional[str] = None
-    case_number: Optional[str] = None
-    created_at: Optional[str] = None
-    image_urls: List[str]
+    image_urls: List[str] = Field(
+        ...,
+        description="List of image URLs to analyze for vehicle damage",
+        example=[
+            "https://example.com/photo1.jpg",
+            "https://example.com/photo2.jpg"
+        ]
+    )
 
 
-
-@app.post("/analyze_batch")
+@app.post(
+    "/analyze_batch",
+    summary="Batch-inspect damage images",
+    description="Submit a JSON body containing a list of image URLs and receive structured vehicle damage data.",
+    response_description="Structured damage data and metadata"
+)
 async def analyze_batch(req: AnalyzeBatchRequest):
-    if not req.image_urls or not isinstance(req.image_urls, list):
+    """
+    Batch-inspect a set of vehicle damage images.
+    - **image_urls**: required list of URLs pointing to damage images.
+    - **case_id**, **case_number**, **created_at**: optional fields echoed back.
+    """
+    if not req.image_urls:
         raise HTTPException(status_code=400, detail="`image_urls` list required")
 
     try:
@@ -339,13 +356,6 @@ async def analyze_batch(req: AnalyzeBatchRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # fill in metadata if provided
-    if req.case_id:
-        result["damageCaseId"] = req.case_id
-    if req.case_number:
-        result["caseNumber"] = req.case_number
-    if req.created_at:
-        result["createdAt"] = req.created_at
 
     return {
         "result": result,
@@ -355,21 +365,37 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
+
 model = WhisperModel("base")
-@app.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+
+
+@app.post(
+    "/transcribe",
+    summary="Transcribe an audio file",
+    description="Upload an audio file (MP3, WAV, etc.) and receive a text transcription.",
+    response_description="Transcript of the uploaded audio"
+)
+async def transcribe_audio(
+    file: UploadFile = File(
+        ...,
+        description="The audio file to transcribe (supported formats: MP3, WAV, etc.)"
+    )
+):
+    """
+    Transcribe an uploaded audio file into text.
+    - **file**: audio file to be transcribed.
+    """
     if not file.content_type.startswith("audio/"):
-        raise HTTPException(400, "Please upload an audio file.")
+        raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
 
     data = await file.read()
-    # create a real file with .mp3 suffix and close it
     tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     tmp.write(data)
-    tmp.close()                              # ← MUST close on Windows
+    tmp.close()  # MUST close on Windows
     try:
         segments, _ = model.transcribe(tmp.name)
     finally:
-        os.unlink(tmp.name)                  # clean up
+        tmp.unlink(tmp.name)
 
-    text = "".join(s.text for s in segments)
-    return {"transcript": text}
+    transcript = "".join(s.text for s in segments)
+    return {"transcript": transcript}
