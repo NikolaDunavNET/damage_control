@@ -1,0 +1,23 @@
+{
+  "basicInfo": {
+    "date": "",
+    "time": "",
+    "locality": {
+      "place": "",
+      "country": ""
+    },
+    "injuries": {
+      "evenIfSlight": null,
+      "details": ""
+    }
+  },
+  "vehicles": [
+    {
+      "registrationNumber": "",
+      "damage": ""
+    }
+  ],
+  "additional_information": {
+    "details": ""
+  }
+}

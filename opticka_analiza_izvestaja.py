@@ -3,9 +3,6 @@ from io import BytesIO
 from konfiguracija import get_document_intel_object, get_openai_credentials
 import json
 
-with open('format_izlaza.json', 'rb') as f:
-    format_izlaza = json.load(f)
-
 def extract_info_from_image(file_input,
                             max_size=1000):
     """
@@ -43,13 +40,15 @@ def extract_info_from_pdf(file_input):
     return poller.result()
 
 
-def process_ocr_output(ocr_json: str) -> str:
+def process_ocr_output(ocr_json: str,
+                       document_type: str = 'general') -> str:
     """
     Feeds the raw OCR JSON (ocr_json) into the model with a strict system prompt,
     and returns the assistant’s raw text response (your flat JSON).
     """
 
     model, client = get_openai_credentials()
+    format_izlaza = get_output_form(document_type)
 
     system_prompt = (
         "You are a highly accurate data-extraction tool. "
@@ -80,7 +79,8 @@ def process_ocr_output(ocr_json: str) -> str:
     return dict_response
 
 def analyse_document(input,
-                     input_type='image'):
+                     input_type='image',
+                     document_type='general'):
     """
     Performs document analysis and returns the output
     """
@@ -95,8 +95,23 @@ def analyse_document(input,
 
     return processed_output
 
+output_form_dict = {
+    'general': 'generalna_forma_izlaza.json',
+    'eu_report': 'eu_izvestaj_forma_izlaze.json'
+}
+
+def get_output_form(document_type):
+    if document_type not in output_form_dict.keys():
+        raise ValueError("Invalid document type. Please choose 'general' or 'eu_report'.")
+    with open(output_form_dict[document_type], 'rb') as f:
+        output_form = json.load(f)
+    return output_form
+
+
 
 if __name__ == "__main__":
-    pass
+    with open('generalna_forma_izlaza.json', 'rb') as f:
+        general_report = json.load(f)
+    print(general_report)
 
 
