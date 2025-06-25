@@ -3,6 +3,18 @@ from io import BytesIO
 from konfiguracija import get_document_intel_object, get_openai_credentials
 import json
 
+OUTPUT_FILE_MAPPING = {
+    'general': 'generalna_forma_izlaza.json',
+    'eu_report': 'eu_izvestaj_forma_izlaze.json'
+}
+
+def get_output_form(document_type):
+    if document_type not in OUTPUT_FILE_MAPPING.keys():
+        raise ValueError(f"{document_type} is an invalid document type. Please choose 'general' or 'eu_report'.")
+    with open(OUTPUT_FILE_MAPPING[document_type], 'rb') as f:
+        output_form = json.load(f)
+    return output_form
+
 def extract_info_from_image(file_input,
                             max_size=1000):
     """
@@ -38,7 +50,6 @@ def extract_info_from_pdf(file_input):
         content_type="application/pdf"
     )
     return poller.result()
-
 
 def process_ocr_output(ocr_json: str,
                        document_type: str = 'general') -> str:
@@ -91,21 +102,10 @@ def analyse_document(input,
     else:
         raise ValueError("Invalid input type. Please choose 'image' or 'pdf'.")
 
-    processed_output = process_ocr_output(document_intelligence_output.content)
+    processed_output = process_ocr_output(document_intelligence_output.content,
+                                          document_type=document_type)
 
     return processed_output
-
-output_form_dict = {
-    'general': 'generalna_forma_izlaza.json',
-    'eu_report': 'eu_izvestaj_forma_izlaze.json'
-}
-
-def get_output_form(document_type):
-    if document_type not in output_form_dict.keys():
-        raise ValueError("Invalid document type. Please choose 'general' or 'eu_report'.")
-    with open(output_form_dict[document_type], 'rb') as f:
-        output_form = json.load(f)
-    return output_form
 
 
 
