@@ -5,12 +5,13 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import datetime
 from opticka_analiza_izvestaja import analyse_document
-#from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
+from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
 from pydantic import BaseModel, Field
 from typing import List
 from faster_whisper import WhisperModel
 import tempfile
 
+WHISPER_MODEL_NAME = "large-v3-turbo"
 app = FastAPI(
     title="Vehicle Damage Analyzer",
     description="Analyze vehicle damage images via Google Gemini AI and transcribe audio files using Whisper.",
@@ -24,15 +25,6 @@ app = FastAPI(
 def read_root():
     return {"Naslov": "Damage Control API"}
 
-class AnalyzeBatchRequest(BaseModel):
-    image_urls: List[str] = Field(
-        ...,
-        description="List of image URLs to analyze for vehicle damage",
-        example=[
-            "https://example.com/photo1.jpg",
-            "https://example.com/photo2.jpg"
-        ]
-    )
 
 @app.post(
     "/analyze_batch",
@@ -65,7 +57,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
-model = WhisperModel("base")
+model = WhisperModel(WHISPER_MODEL_NAME)
 
 @app.post(
     "/transcribe",
@@ -94,14 +86,14 @@ async def transcribe_audio(
     transcript = "".join(s.text for s in segments)
     return {"transcript": transcript}
 
-@app.post("/analyze-report",
+@app.post("/analyze_report",
         summary = "Analyze a traffic accident report by performing OCR and extracting relevant information",
         description = "Upload an image file (JPG, JPEG, PNG) or a pdf file to receive relevant information.",
         response_description = "Relevant information"
 )
 async def analyze_report(
-        document_type: str = Form(...),
         file: UploadFile = File(...),
+        document_type: str = Form(...),
     ):
 
     if not file:
