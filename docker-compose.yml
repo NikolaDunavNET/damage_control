@@ -10,6 +10,8 @@ services:
     environment:
       - GEMINI_API_KEY=AIzaSyClArbf77SHWFgtDdE7f9pbcZLyb2EugdQ
       - MODEL_NAME=gemini-2.0-flash-exp
+    env_file:
+      - .env
     logging:
       driver: 'json-file'
 #

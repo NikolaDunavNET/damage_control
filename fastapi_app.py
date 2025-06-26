@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, HTTPException, Path, Body, File, UploadFile
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
@@ -12,12 +13,12 @@ from dotenv import load_dotenv
 from faster_whisper import WhisperModel
 import tempfile
 
-load_dotenv()
+#load_dotenv()
 # --- Configuration & Client setup ------------------------------------------------
-API_KEY = os.getenv("GEMINI_API_KEY")
-print(API_KEY)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = os.getenv("MODEL_NAME")  # "gemini-1.5-pro"
+#API_KEY = os.getenv("GEMINI_API_KEY")
+#print(API_KEY)
+GEMINI_API_KEY = "AIzaSyClArbf77SHWFgtDdE7f9pbcZLyb2EugdQ"
+MODEL_NAME = "gemini-2.0-flash-exp"  # "gemini-1.5-pro"
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 CONFIG = {
@@ -399,3 +400,6 @@ async def transcribe_audio(
 
     transcript = "".join(s.text for s in segments)
     return {"transcript": transcript}
+
+if __name__ == "__main__":
+    uvicorn.run("fastapi_app:app", host="0.0.0.0", port=8080, reload=True)
