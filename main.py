@@ -65,7 +65,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
-model = WhisperModel("base")
+model = WhisperModel("large-v3-turbo")
 
 @app.post(
     "/transcribe",
