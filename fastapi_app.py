@@ -366,7 +366,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
     }
 
 
-model = WhisperModel("base")
+model = WhisperModel("large-v3-turbo")
 
 
 @app.post(
@@ -395,7 +395,7 @@ async def transcribe_audio(
     try:
         segments, _ = model.transcribe(tmp.name)
     finally:
-        tmp.unlink(tmp.name)
+        os.unlink(tmp.name)
 
     transcript = "".join(s.text for s in segments)
     return {"transcript": transcript}

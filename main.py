@@ -1,12 +1,13 @@
 from io import BytesIO
-
+from vizualna_anliza_ostecenja import batch_inspect
 from fastapi import FastAPI, HTTPException, Path, Body, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 import uvicorn
-
+import datetime
 from opticka_analiza_izvestaja import analyse_document
 #from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
-
+from pydantic import BaseModel, Field
+from typing import List
 from faster_whisper import WhisperModel
 import tempfile
 
@@ -23,36 +24,46 @@ app = FastAPI(
 def read_root():
     return {"Naslov": "Damage Control API"}
 
-# @app.post(
-#     "/analyze_batch",
-#     summary="Batch-inspect damage images",
-#     description="Submit a JSON body containing a list of image URLs and receive structured vehicle damage data.",
-#     response_description="Structured damage data and metadata"
-# )
-# async def analyze_batch(req: AnalyzeBatchRequest):
-#     """
-#     Batch-inspect a set of vehicle damage images.
-#     - **image_urls**: required list of URLs pointing to damage images.
-#     - **case_id**, **case_number**, **created_at**: optional fields echoed back.
-#     """
-#     if not req.image_urls:
-#         raise HTTPException(status_code=400, detail="`image_urls` list required")
-#
-#     try:
-#         result = batch_inspect(
-#             image_urls=req.image_urls,
-#         )
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-#
-#
-#     return {
-#         "result": result,
-#         "metadata": {
-#             "image_count": len(req.image_urls),
-#             "timestamp": datetime.datetime.now().isoformat()
-#         }
-#     }
+class AnalyzeBatchRequest(BaseModel):
+    image_urls: List[str] = Field(
+        ...,
+        description="List of image URLs to analyze for vehicle damage",
+        example=[
+            "https://example.com/photo1.jpg",
+            "https://example.com/photo2.jpg"
+        ]
+    )
+
+@app.post(
+    "/analyze_batch",
+    summary="Batch-inspect damage images",
+    description="Submit a JSON body containing a list of image URLs and receive structured vehicle damage data.",
+    response_description="Structured damage data and metadata"
+)
+async def analyze_batch(req: AnalyzeBatchRequest):
+    """
+    Batch-inspect a set of vehicle damage images.
+    - **image_urls**: required list of URLs pointing to damage images.
+    - **case_id**, **case_number**, **created_at**: optional fields echoed back.
+    """
+    if not req.image_urls:
+        raise HTTPException(status_code=400, detail="`image_urls` list required")
+
+    try:
+        result = batch_inspect(
+            image_urls=req.image_urls,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+    return {
+        "result": result,
+        "metadata": {
+            "image_count": len(req.image_urls),
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+    }
 
 model = WhisperModel("base")
 
@@ -123,5 +134,6 @@ async def analyze_report(
 
 
 # Run the app
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+"""
