@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mldnet.azurecr.io/damage_control_api:1.0.4
+    image: mldnet.azurecr.io/damage_control_api:1.0.5
     restart: always
     ports:
       - 8080:80
