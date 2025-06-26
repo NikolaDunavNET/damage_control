@@ -9,8 +9,18 @@ OUTPUT_FILE_MAPPING = {
 }
 
 def get_output_form(document_type):
+    """
+    Get the output form from the document type
+    """
+    # if document_type is not specified
+    if document_type is None:
+        document_type = 'general'
+
+    # chose the file path from the dictionary
     if document_type not in OUTPUT_FILE_MAPPING.keys():
         raise ValueError(f"{document_type} is an invalid document type. Please choose 'general' or 'eu_report'.")
+
+    # Load and pass the file
     with open(OUTPUT_FILE_MAPPING[document_type], 'rb') as f:
         output_form = json.load(f)
     return output_form
@@ -106,7 +116,6 @@ def analyse_document(input,
                                           document_type=document_type)
 
     return processed_output
-
 
 
 if __name__ == "__main__":

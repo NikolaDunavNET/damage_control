@@ -7,7 +7,7 @@ import datetime
 from opticka_analiza_izvestaja import analyse_document
 from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from faster_whisper import WhisperModel
 import tempfile
 
@@ -57,34 +57,34 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
-model = WhisperModel(WHISPER_MODEL_NAME)
-
-@app.post(
-    "/transcribe",
-    summary="Transcribe an audio file",
-    description="Upload an audio file (MP3, WAV, etc.) and receive a text transcription.",
-    response_description="Transcript of the uploaded audio"
-)
-async def transcribe_audio(
-    file: UploadFile = File(
-        ...,
-        description="The audio file to transcribe (supported formats: MP3, WAV, etc.)"
-    )
-):
-    """
-    Transcribe an uploaded audio file into text.
-    - **file**: audio file to be transcribed.
-    """
-    if not file.content_type.startswith("audio/"):
-        raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
-
-    contents = await file.read()
-    file_stream = BytesIO(contents)
-
-    segments, _ = model.transcribe(file_stream)
-
-    transcript = "".join(s.text for s in segments)
-    return {"transcript": transcript}
+# model = WhisperModel(WHISPER_MODEL_NAME)
+#
+# @app.post(
+#     "/transcribe",
+#     summary="Transcribe an audio file",
+#     description="Upload an audio file (MP3, WAV, etc.) and receive a text transcription.",
+#     response_description="Transcript of the uploaded audio"
+# )
+# async def transcribe_audio(
+#     file: UploadFile = File(
+#         ...,
+#         description="The audio file to transcribe (supported formats: MP3, WAV, etc.)"
+#     )
+# ):
+#     """
+#     Transcribe an uploaded audio file into text.
+#     - **file**: audio file to be transcribed.
+#     """
+#     if not file.content_type.startswith("audio/"):
+#         raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
+#
+#     contents = await file.read()
+#     file_stream = BytesIO(contents)
+#
+#     segments, _ = model.transcribe(file_stream)
+#
+#     transcript = "".join(s.text for s in segments)
+#     return {"transcript": transcript}
 
 @app.post("/analyze_report",
         summary = "Analyze a traffic accident report by performing OCR and extracting relevant information",
@@ -93,7 +93,8 @@ async def transcribe_audio(
 )
 async def analyze_report(
         file: UploadFile = File(...),
-        document_type: str = Form(...),
+        document_type: Optional[str] = Form(None)
+
     ):
 
     if not file:
@@ -122,3 +123,6 @@ async def analyze_report(
 
     return JSONResponse(content=result)
 
+if __name__=='__main__':
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8080)
