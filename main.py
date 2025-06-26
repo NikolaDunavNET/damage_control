@@ -1,15 +1,13 @@
 from io import BytesIO
-from vizualna_anliza_ostecenja import batch_inspect
-from fastapi import FastAPI, HTTPException, Path, Body, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse
-import uvicorn
 import datetime
-from opticka_analiza_izvestaja import analyse_document
+from opticka_analiza_izvestaja import analyse_document, process_raw_output
 from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Optional
 from faster_whisper import WhisperModel
-import tempfile
+
+
 
 WHISPER_MODEL_NAME = "large-v3-turbo"
 app = FastAPI(
@@ -57,34 +55,40 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         }
     }
 
-# model = WhisperModel(WHISPER_MODEL_NAME)
-#
-# @app.post(
-#     "/transcribe",
-#     summary="Transcribe an audio file",
-#     description="Upload an audio file (MP3, WAV, etc.) and receive a text transcription.",
-#     response_description="Transcript of the uploaded audio"
-# )
-# async def transcribe_audio(
-#     file: UploadFile = File(
-#         ...,
-#         description="The audio file to transcribe (supported formats: MP3, WAV, etc.)"
-#     )
-# ):
-#     """
-#     Transcribe an uploaded audio file into text.
-#     - **file**: audio file to be transcribed.
-#     """
-#     if not file.content_type.startswith("audio/"):
-#         raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
-#
-#     contents = await file.read()
-#     file_stream = BytesIO(contents)
-#
-#     segments, _ = model.transcribe(file_stream)
-#
-#     transcript = "".join(s.text for s in segments)
-#     return {"transcript": transcript}
+model = WhisperModel(WHISPER_MODEL_NAME)
+
+@app.post(
+    "/transcribe",
+    summary="Transcribe an audio file",
+    description="Upload an audio file (MP3, WAV, etc.) and receive a text transcription.",
+    response_description="Transcript of the uploaded audio"
+)
+async def transcribe_audio(
+    file: UploadFile = File(
+        ...,
+        description="The audio file to transcribe (supported formats: MP3, WAV, etc.)"
+    )
+):
+    """
+    Transcribe an uploaded audio file into text.
+    - **file**: audio file to be transcribed.
+    """
+    if not file.content_type.startswith("audio/"):
+        raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
+
+    contents = await file.read()
+    file_stream = BytesIO(contents)
+
+    # Produce transcript
+    segments, _ = model.transcribe(file_stream)
+    transcript = "".join(s.text for s in segments)
+
+    # extract information from transcript
+    extracted_output = process_raw_output(transcript)
+
+    extracted_output['transcript'] = transcript
+
+    return extracted_output
 
 @app.post("/analyze_report",
         summary = "Analyze a traffic accident report by performing OCR and extracting relevant information",
@@ -104,7 +108,7 @@ async def analyze_report(
 
     if filename.endswith(".pdf"):
         input_type = "pdf"
-    elif filename.endswith((".png", ".jpg", ".jpeg")):
+    elif filename.endswith((".png", ".jpg", ".jpeg", '.webp')):
         input_type = "image"
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type. Supported file types: PDF, JPEG, PNG.")

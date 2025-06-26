@@ -2,6 +2,7 @@ from PIL import Image
 from io import BytesIO
 from konfiguracija import get_document_intel_object, get_openai_credentials
 import json
+import ast
 
 OUTPUT_FILE_MAPPING = {
     'general': 'generalna_forma_izlaza.json',
@@ -61,7 +62,7 @@ def extract_info_from_pdf(file_input):
     )
     return poller.result()
 
-def process_ocr_output(ocr_json: str,
+def process_raw_output(ocr_json: str,
                        document_type: str = 'general') -> str:
     """
     Feeds the raw OCR JSON (ocr_json) into the model with a strict system prompt,
@@ -73,7 +74,7 @@ def process_ocr_output(ocr_json: str,
 
     system_prompt = (
         "You are a highly accurate data-extraction tool. "
-        "Given the full OCR output from a document (as JSON), "
+        "Given the full OCR output from a document, "
         "return ONLY a single, valid JSON object by filling in the values"
         "You will likely be given a text in English or Serbian"
         "Correct some obvious mistakes if esitmate that they are made"
@@ -88,16 +89,27 @@ def process_ocr_output(ocr_json: str,
         {"role": "user",    "content": user_prompt}
     ]
 
-    reponse = client.chat.completions.create(
+    response = client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=0.0,
     )
 
-    clean_response = reponse.choices[0].message.content.replace('```json', '').replace('```', '').strip()
-    dict_response = json.loads(clean_response)
+    raw = response.choices[0].message.content.strip()
 
-    return dict_response
+    # Strip Markdown formatting if present
+    clean_response = raw.replace("```json", "").replace("```", "").strip()
+
+    try:
+        return json.loads(clean_response)
+    except json.JSONDecodeError as e:
+        # Fallback: try parsing as Python dict if it uses single quotes
+        try:
+            return ast.literal_eval(clean_response)
+        except Exception as fallback_error:
+            # Final fallback: raise an error with useful info
+            raise ValueError(
+                f"Failed to parse LLM output.\nRaw output:\n{raw}\n\nJSON error: {e}\nLiteral eval error: {fallback_error}")
 
 def analyse_document(input,
                      input_type='image',
@@ -112,7 +124,7 @@ def analyse_document(input,
     else:
         raise ValueError("Invalid input type. Please choose 'image' or 'pdf'.")
 
-    processed_output = process_ocr_output(document_intelligence_output.content,
+    processed_output = process_raw_output(document_intelligence_output.content,
                                           document_type=document_type)
 
     return processed_output
