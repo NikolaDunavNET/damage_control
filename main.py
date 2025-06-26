@@ -104,8 +104,6 @@ async def analyze_report(
         file: UploadFile = File(...),
     ):
 
-
-
     if not file:
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -132,8 +130,3 @@ async def analyze_report(
 
     return JSONResponse(content=result)
 
-
-# Run the app
-"""if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
-"""

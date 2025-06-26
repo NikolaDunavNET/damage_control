@@ -5,3 +5,4 @@ MODEL = WhisperModel('base')
 
 
 def transcribe_file(data):
+    pass
