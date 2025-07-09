@@ -48,11 +48,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
 
 
     return {
-        "result": result,
-        "metadata": {
-            "image_count": len(req.image_urls),
-            "timestamp": datetime.datetime.now().isoformat()
-        }
+        "result": result
     }
 
 model = WhisperModel(WHISPER_MODEL_NAME)
