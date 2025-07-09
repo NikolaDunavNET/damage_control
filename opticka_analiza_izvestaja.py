@@ -35,7 +35,6 @@ def extract_info_from_image(file_input,
     client = get_document_intel_object()
     img = Image.open(file_input)
 
-    # Resize image if needed
     w, h = img.size
     if max(w, h) > max_size:
         factor = max_size / max(w, h)
@@ -43,6 +42,7 @@ def extract_info_from_image(file_input,
     stream = BytesIO()
     img.save(stream, format="PNG")
     stream.seek(0)
+
     poller = client.begin_analyze_document(
         model_id="prebuilt-layout",
         body=stream,
