@@ -1,10 +1,11 @@
+import os
 from io import BytesIO
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 import datetime
 from opticka_analiza_izvestaja import analyse_document, process_raw_output
 from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
-from typing import Optional
+from typing import Optional, Literal
 from faster_whisper import WhisperModel
 import logging
 
@@ -22,7 +23,7 @@ WHISPER_MODEL_NAME = "large-v3-turbo"
 app = FastAPI(
     title="Vehicle Damage Analyzer",
     description="Analyze vehicle damage images via Google Gemini AI and transcribe audio files using Whisper.",
-    version="1.1.0",
+    version=os.getenv("VERSION"),
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -45,6 +46,11 @@ async def analyze_batch(req: AnalyzeBatchRequest):
     - **image_urls**: required list of URLs pointing to damage images.
     - **case_id**, **case_number**, **created_at**: optional fields echoed back.
     """
+
+    if not req:
+        logger.warning("No file uploaded.")
+        raise HTTPException(status_code=400, detail="No file provided")
+
     if not req.image_urls:
         logger.warning("No image URLs provided.")
         raise HTTPException(status_code=400, detail="`image_urls` list required")
@@ -85,6 +91,10 @@ async def transcribe_audio(
     Transcribe an uploaded audio file into text.
     - **file**: audio file to be transcribed.
     """
+    if not file:
+        logger.warning("No file uploaded.")
+        raise HTTPException(status_code=400, detail="No file provided")
+
     if not file.content_type.startswith("audio/"):
         logger.warning("Invalid file type: %s", file.content_type)
         raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
@@ -113,8 +123,10 @@ async def transcribe_audio(
 )
 async def analyze_report(
         file: UploadFile = File(...),
-        document_type: Optional[str] = Form(None)
-
+        document_type: Optional[Literal["general", "eu_report"]] = Form(
+            None,
+            description="Type of document: must be 'general' or 'eu_report'"
+        )
     ):
 
     if not file:
