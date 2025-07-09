@@ -6,9 +6,14 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py opticka_analiza_izvestaja.py vizualna_anliza_ostecenja.py transkripcija_izvestaja.py konfiguracija.py ./
+COPY main.py .
+COPY opticka_analiza_izvestaja.py .
+COPY vizualna_anliza_ostecenja.py .
+COPY konfiguracija.py .
+COPY eu_izvestaj_forma_izlaze.json .
+COPY generalna_forma_izlaza.json .
+COPY .env .
 
-EXPOSE 80
+EXPOSE 8080
 
-# CMD ["fastapi", "run", "fastapi_app.py"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
