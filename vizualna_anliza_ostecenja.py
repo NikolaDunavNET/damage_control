@@ -73,9 +73,6 @@ def batch_inspect(
 
     Now return ONLY this single JSON object, with exactly these keys:
     {{
-      "damageCaseId":  "...",
-      "caseNumber":    "...",
-      "createdAt":     "...",
       "damages": [
         {{
           "group":     "<one of CONFIG[\\"groups\\"]>",
