@@ -22,9 +22,9 @@ def get_document_intel_object():
 
 def get_openai_credentials():
     client = AzureOpenAI(
-        api_version= os.environ["API_VERSION"],
-        azure_endpoint=os.environ["DNET_AZURE_ENDPOINT"],
-        api_key=os.environ["DNET_OPENAI_API_KEY"],
+        api_version= os.getenv("API_VERSION"),
+        azure_endpoint=os.getenv("DNET_AZURE_ENDPOINT"),
+        api_key=os.getenv("DNET_OPENAI_API_KEY"),
     )
     model = "gpt-4o"
 
