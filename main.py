@@ -2,24 +2,22 @@ import os
 from io import BytesIO
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.responses import JSONResponse
-import datetime
-from opticka_analiza_izvestaja import analyse_document, process_raw_output
+from opticka_analiza_izvestaja import analyse_document, analyse_audio
 from vizualna_anliza_ostecenja import AnalyzeBatchRequest, batch_inspect
+from transcriptions_store import TRANSCRIPTION_DATA
 from typing import Optional, Literal
-from faster_whisper import WhisperModel
 import logging
+import uuid
+import threading
 
 # --- Logging setup ---
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[logging.StreamHandler()])
 logger = logging.getLogger(__name__)
 
 
-WHISPER_MODEL_NAME = "large-v3-turbo"
 
-# FastAPI app
 app = FastAPI(
     title="Vehicle Damage Analyzer",
     description="Analyze vehicle damage images via Google Gemini AI and transcribe audio files using Whisper.",
@@ -69,7 +67,7 @@ async def analyze_batch(req: AnalyzeBatchRequest):
         "result": result
     }
 
-model = WhisperModel(WHISPER_MODEL_NAME)
+
 
 @app.post(
     "/transcribe",
@@ -95,23 +93,35 @@ async def transcribe_audio(
         logger.warning("Invalid file type: %s", file.content_type)
         raise HTTPException(status_code=400, detail="Please upload a valid audio file.")
 
+    guid = str(uuid.uuid4())
+    TRANSCRIPTION_DATA[guid] = None
+
     try:
         contents = await file.read()
         file_stream = BytesIO(contents)
 
-        # Produce transcript
-        segments, _ = model.transcribe(file_stream)
-        logger.info(f"Transcription completed successfully.")
-        transcript = "".join(s.text for s in segments)
+        thread = threading.Thread(target=analyse_audio, args=(file_stream, guid))
+        thread.start()
 
-        # extract information from transcript
-        extracted_output = process_raw_output(transcript)
+        return {"guid": guid}
 
-        extracted_output['transcript'] = transcript
-
-        return extracted_output
     except Exception as e:
         logger.error(f"Error during transcription: {str(e)}")
+
+@app.get("/get_transcription")
+async def get_transcription(guid: str):
+    if guid not in TRANSCRIPTION_DATA:
+        return {"output": "Transcription doesn't exist"}
+
+    result = TRANSCRIPTION_DATA[guid]
+    if result is None:
+        return {"output": "Transcription is not yet ready"}
+
+    # Optional: remove to free memory
+    del TRANSCRIPTION_DATA[guid]
+    return {"output": result}
+
+
 @app.post("/analyze_report",
         summary = "Analyze a traffic accident report by performing OCR and extracting relevant information",
         description = "Upload an image file (JPG, JPEG, PNG) or a pdf file to receive relevant information.",

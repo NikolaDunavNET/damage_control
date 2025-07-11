@@ -1,13 +1,26 @@
 from PIL import Image
 from io import BytesIO
-from konfiguracija import get_document_intel_object, get_openai_credentials
 import json
 import ast
+import logging
+
+from konfiguracija import get_document_intel_object, get_openai_credentials
+from faster_whisper import WhisperModel
+
+from transcriptions_store import TRANSCRIPTION_DATA
 
 OUTPUT_FILE_MAPPING = {
     'general': 'generalna_forma_izlaza.json',
     'eu_report': 'eu_izvestaj_forma_izlaze.json'
 }
+
+WHISPER_MODEL_NAME = "large-v3-turbo"
+TRANSCRIPTION_MODEL = WhisperModel(WHISPER_MODEL_NAME)
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[logging.StreamHandler()])
+logger = logging.getLogger(__name__)
 
 def get_output_form(document_type):
     """
@@ -128,6 +141,23 @@ def analyse_document(input,
                                           document_type=document_type)
 
     return processed_output
+
+def analyse_audio(input, guid):
+    logger.info("Transcription started")
+
+    segments, _ = TRANSCRIPTION_MODEL.transcribe(input)
+    logger.info(f"Transcription generator created.")
+
+    transcript = "".join(s.text for s in segments)
+    logger.info("Transcript assembled successfully.")
+
+    # extract information from transcript
+    extracted_output = process_raw_output(transcript)
+    logger.info("LLM analysis completed")
+
+    extracted_output['transcript'] = transcript
+
+    TRANSCRIPTION_DATA[guid] = extracted_output
 
 
 if __name__ == "__main__":
