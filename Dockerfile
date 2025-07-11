@@ -13,6 +13,7 @@ COPY konfiguracija.py .
 COPY eu_izvestaj_forma_izlaze.json .
 COPY generalna_forma_izlaza.json .
 COPY .env .
+COPY transcriptions_store.py .
 
 EXPOSE 8080
 
